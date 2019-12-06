@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.camera.core.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -81,7 +82,7 @@ class MainFragment : Fragment() {
 
     private val imageSavedListener = object : ImageCapture.OnImageSavedListener {
         override fun onImageSaved(file: File) {
-            println("success --> ${file.absolutePath}")
+            Toast.makeText(requireContext(), "保存地址:${file.absolutePath}", Toast.LENGTH_SHORT).show()
         }
 
         override fun onError(
@@ -89,7 +90,7 @@ class MainFragment : Fragment() {
             message: String,
             cause: Throwable?
         ) {
-            println(message)
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
             cause?.printStackTrace()
         }
 
