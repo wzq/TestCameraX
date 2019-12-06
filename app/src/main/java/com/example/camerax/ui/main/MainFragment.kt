@@ -1,7 +1,6 @@
 package com.example.camerax.ui.main
 
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
