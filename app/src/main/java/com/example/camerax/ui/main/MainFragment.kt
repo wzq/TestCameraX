@@ -5,10 +5,12 @@ import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.camerax.R
 import java.io.File
 import kotlin.math.abs
@@ -48,7 +50,7 @@ class MainFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
         val executor = ContextCompat.getMainExecutor(requireContext())
         val cameraView = view?.findViewById<TextureView>(R.id.camera) ?: return
-        cameraView.setOnClickListener {
+        view?.findViewById<View>(R.id.take_photo)?.setOnClickListener {
             imageCapture.takePicture(
                 filePath,
                 executor,
@@ -70,7 +72,7 @@ class MainFragment : Fragment() {
             imageCapture = ImageCapture(
                 ImageCaptureConfig.Builder()
                     .setLensFacing(lensFacing)
-                    .setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
+                    .setCaptureMode(ImageCapture.CaptureMode.MAX_QUALITY)
                     .setTargetAspectRatio(screenAspectRatio)
                     .setTargetRotation(cameraView.display.rotation)
                     .build())
@@ -80,9 +82,13 @@ class MainFragment : Fragment() {
         }
     }
 
+
+    private val previewView: ImageView? by lazy { view?.findViewById<ImageView>(R.id.preview) }
+
     private val imageSavedListener = object : ImageCapture.OnImageSavedListener {
         override fun onImageSaved(file: File) {
             Toast.makeText(requireContext(), "保存地址:${file.absolutePath}", Toast.LENGTH_SHORT).show()
+            if(previewView != null) Glide.with(this@MainFragment).load(filePath).into(previewView!!)
         }
 
         override fun onError(
