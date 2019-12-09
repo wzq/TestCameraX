@@ -1,5 +1,7 @@
 package com.example.camerax.ui.main
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.TextureView
@@ -10,7 +12,6 @@ import android.widget.Toast
 import androidx.camera.core.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
 import com.example.camerax.R
 import java.io.File
 import kotlin.math.abs
@@ -44,10 +45,12 @@ class MainFragment : Fragment() {
     }
 
     private lateinit var imageCapture: ImageCapture
+    private val previewView: ImageView? by lazy { view?.findViewById<ImageView>(R.id.preview) }
 
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+        if (filePath.exists()) previewView?.setImageBitmap(getLocalBitmap())
         val executor = ContextCompat.getMainExecutor(requireContext())
         val cameraView = view?.findViewById<TextureView>(R.id.camera) ?: return
         view?.findViewById<View>(R.id.take_photo)?.setOnClickListener {
@@ -82,13 +85,10 @@ class MainFragment : Fragment() {
         }
     }
 
-
-    private val previewView: ImageView? by lazy { view?.findViewById<ImageView>(R.id.preview) }
-
     private val imageSavedListener = object : ImageCapture.OnImageSavedListener {
         override fun onImageSaved(file: File) {
             Toast.makeText(requireContext(), "保存地址:${file.absolutePath}", Toast.LENGTH_SHORT).show()
-            if(previewView != null) Glide.with(this@MainFragment).load(filePath).into(previewView!!)
+            previewView?.setImageBitmap(getLocalBitmap())
         }
 
         override fun onError(
@@ -100,6 +100,12 @@ class MainFragment : Fragment() {
             cause?.printStackTrace()
         }
 
+    }
+
+    private fun getLocalBitmap(): Bitmap {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        val bm = BitmapFactory.decodeFile(filePath.path, options)
+        return bm
     }
 
 
