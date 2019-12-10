@@ -1,5 +1,6 @@
 package com.example.camerax.ui.main
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -12,21 +13,20 @@ import android.widget.Toast
 import androidx.camera.core.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.camerax.R
+import com.example.camerax.ui.gallery.GalleryActivity
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.system.measureTimeMillis
 
 
 class MainFragment : Fragment() {
 
     companion object {
         fun newInstance() = MainFragment()
-    }
-
-    private val filePath by lazy {
-        File(requireActivity().externalMediaDirs.first(), "test.png")
     }
 
     private val lensFacing = CameraX.LensFacing.BACK
@@ -45,17 +45,27 @@ class MainFragment : Fragment() {
     }
 
     private lateinit var imageCapture: ImageCapture
-    private val previewView: ImageView? by lazy { view?.findViewById<ImageView>(R.id.preview) }
+    private val previewView: ImageView? by lazy {
+        view?.findViewById<ImageView>(R.id.preview)?.apply { setOnClickListener {
+            startActivity(Intent(requireActivity(), GalleryActivity::class.java))
+        } }
+    }
 
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        if (filePath.exists()) previewView?.setImageBitmap(getLocalBitmap())
+        val dir = requireActivity().externalMediaDirs.first()
+        if (dir.isDirectory) {
+            val lastImage = dir.listFiles()?.lastOrNull()
+            if (lastImage != null) {
+                Glide.with(this).load(lastImage).into(previewView!!)
+            }
+        }
         val executor = ContextCompat.getMainExecutor(requireContext())
         val cameraView = view?.findViewById<TextureView>(R.id.camera) ?: return
         view?.findViewById<View>(R.id.take_photo)?.setOnClickListener {
             imageCapture.takePicture(
-                filePath,
+                getFile(),
                 executor,
                 imageSavedListener
             )
@@ -64,7 +74,7 @@ class MainFragment : Fragment() {
         cameraView.post {
 //            val metrics = DisplayMetrics().also { cameraView.display.getRealMetrics(it) }
             val screenAspectRatio = aspectRatio(cameraView.width, cameraView.height)
-
+            println()
             val previewConfig = PreviewConfig.Builder().apply {
                 setLensFacing(lensFacing)
                 setTargetAspectRatio(screenAspectRatio)
@@ -87,8 +97,8 @@ class MainFragment : Fragment() {
 
     private val imageSavedListener = object : ImageCapture.OnImageSavedListener {
         override fun onImageSaved(file: File) {
+            Glide.with(this@MainFragment).load(file).into(previewView!!)
             Toast.makeText(requireContext(), "保存地址:${file.absolutePath}", Toast.LENGTH_SHORT).show()
-            previewView?.setImageBitmap(getLocalBitmap())
         }
 
         override fun onError(
@@ -102,10 +112,9 @@ class MainFragment : Fragment() {
 
     }
 
-    private fun getLocalBitmap(): Bitmap {
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        val bm = BitmapFactory.decodeFile(filePath.path, options)
-        return bm
+    private fun getFile(): File {
+        val path = requireActivity().externalMediaDirs.first()
+        return File(path, "test${System.currentTimeMillis()}.png")
     }
 
 
